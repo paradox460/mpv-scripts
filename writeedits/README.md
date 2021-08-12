@@ -30,3 +30,28 @@ The following filters and "edits" are extracted:
 shift+Alt+c script-message-to writeedits write_edits "edits"
 ```
 No default keybindings are provided.
+
+
+# Recommended other scripts and input configurations
+I recommend adding the following to your input.conf, for ease in applying filters/edits for use with this script:
+```
+# Rotate video
+Meta+r cycle-values video-rotate "90" "180" "270" "0"
+Meta+Alt+r cycle-values video-rotate "270" "180" "90" "0"
+Meta+Shift+r set video-rotate "0"
+# Flip video
+h vf toggle hflip
+v vf toggle vflip
+# Remove previous filter
+d vf del -1
+# Clear filters and rotations
+D vf clr ""; set video-rotate "0"
+
+# show current filterchain
+shift+i print-text "${vf}"
+```
+
+Additionally, the following scripts are useful in conjunction with this one:
++ **[autocrop](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua)** Automatically crop black boxes off the sides of your video.
++ **[crop](https://github.com/occivink/mpv-scripts#croplua)** Lets you visually crop the video, recursively. Also supports delogo.
++ **[skipscene](https://github.com/paradox460/mpv-scripts/tree/master/skipsegment)** Skips to the beginning of the next scene.
