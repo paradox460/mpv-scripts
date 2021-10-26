@@ -29,7 +29,7 @@ The following filters and "edits" are extracted:
 ```
 shift+Alt+c script-message-to writeedits write_edits "edits"
 ```
-No default keybindings are provided.
+No default keybindings are provided. Replace `"edits"` with the name of the file you want to write to.
 
 
 # Recommended other scripts and input configurations
@@ -55,3 +55,4 @@ Additionally, the following scripts are useful in conjunction with this one:
 + **[autocrop](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autocrop.lua)** Automatically crop black boxes off the sides of your video.
 + **[crop](https://github.com/occivink/mpv-scripts#croplua)** Lets you visually crop the video, recursively. Also supports delogo.
 + **[skipscene](https://github.com/paradox460/mpv-scripts/tree/master/skipsegment)** Skips to the beginning of the next scene.
++ **[live-filters](https://github.com/hdb/mpv-live-filters)** Allows real time editing of applied filters. Note the list of supported filters above.
