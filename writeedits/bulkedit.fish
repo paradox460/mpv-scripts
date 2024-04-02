@@ -1,18 +1,28 @@
 #! /usr/bin/env fish
-argparse -i 's/strip=?' 'm/multiple' 'noclean' 'h/help' -- $argv
+argparse -i 'i/inplace' 's/strip=' 'm/multiple' 'n/noclean' 'h/help' -- $argv
 
 if set -q _flag_h
-  echo "Consume a tab-separated edit list of files and apply ffmpeg filters to it"
-  echo ""
-  echo "Usage: bulkedit.fish [options]"
-  echo "  -s, --strip: Strips supplied pattern from input filenames."
-  echo "  -m, --multiple: Allows multiple edits to the same source file. Recommend setting output in editfile, else will clobber"
-  echo "  -n, --noclean: Don't delete editlist when done"
-  echo "  -h, --help: Show this help"
-  echo ""
-  echo "Editlist format is 1 edit instruction per line, tab separated. Fields are:"
-  echo "filename, filters, start time, end time, output filename"
-  echo "Only filename is required, although script will do nothing if no other fields are specified"
+  echo "Consume a jsonld edit list of files and apply ffmpeg filters to it
+
+
+Usage: bulkedit.fish [options]
+  -i, --inplace: Uses codec copy on the file, instead of reencoding. May result in offset timestamps
+  -s, --strip: Strips supplied pattern from input filenames.
+  -m, --multiple: Allows multiple edits to the same source file. Recommend setting output in editfile, else will clobber
+                  If this is absent, the first rule in the edit file affecting a
+                  particular file will be used, the others discarded
+  -n, --noclean: Don't delete editlist when done
+  -h, --help: Show this help
+
+  Editlist format is a JSON-LD formatted file, with the following fields available:
+    path <string> the path to the file to be edited
+    start <float, seconds> the beginning timestamp of the clip to trim
+    end <float, seconds> the end (offset from 0 or start) of the clip to trim
+    filters <string[]> list of _exact_ ffmpeg filter commands to apply to the video, in order
+    newFilename <string> new filename to write output towards. If null, overwrites input file
+
+  All fields apart from path are optional
+  "
   exit
 end
 
@@ -31,24 +41,24 @@ if not test -e $listfile
   exit 0
 end
 
-set -l filterCmd ""
-
-if test -n "$_flag_s"
-  set _flag_s (string escape --style=regex "$_flag_s" | string replace -a '/' '\/')
-  set filterCmd "{ gsub(/"$_flag_s"/, \"\"); print }"
-end
-
-set -l dedupeCmd "!_[\$1]++"
-if  set -q _flag_m
-  set dedupeCmd "1"
+set -l dedupeCmd "group_by(.path) | map(.[0]) | .[]"
+if set -q _flag_m
+  set dedupeCmd ".[]"
 end
 
 set -l filesProcessed 0
 
-for f in (awk -F'\t' "$dedupeCmd $filterCmd" $listfile)
-  echo $f | read -d \t -l filename $vars
-  if not test -e $filename
-    continue
+for f in (jq --slurp --compact-output --raw-output $dedupeCmd $listfile)
+  echo $f | jq --raw-output '
+  .path // "",
+  (.filters | join(",")),
+  .start // "",
+  .end // "",
+  .newFilename // ""
+  ' | read -l -L filename $vars
+
+  if test -n "$_flag_s"
+    set filename (string replace $_flag_s "" $filename)
   end
 
   for i in $vars
@@ -56,7 +66,6 @@ for f in (awk -F'\t' "$dedupeCmd $filterCmd" $listfile)
       set -e $i
     end
   end
-
 
   set -q start_time; and set -p start_time "-ss"
   set -q end_time; and set -p end_time "-to"
@@ -70,7 +79,12 @@ for f in (awk -F'\t' "$dedupeCmd $filterCmd" $listfile)
   end
 
   set ogDate ($dateCmd -r $filename --iso-8601=seconds)
-  set vCodec (ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 $filename)
+  set vCodec "copy"
+  if not set -q _flag_i
+    set vCodec (ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 $filename)
+  end
+
+  set -S filters
 
   ffmpeg -hide_banner -i $filename $start_time $end_time -c copy -c:v $vCodec $filters $editedname
 
@@ -84,4 +98,4 @@ if test $filesProcessed -eq 0
   echo "No files processed, check your file and command line options"
   exit 1
 end
-set -q _flag_noclean; or rm $listfile
+set -q _flag_n; or rm -f $listfile

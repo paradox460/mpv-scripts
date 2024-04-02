@@ -99,13 +99,15 @@ function writeEdits(filename) {
     return;
   }
 
-  var line = [
-    path,
-    filterList.join(","),
-    loopTimes["loopStart"],
-    loopTimes["loopEnd"],
-  ].join("\t");
+  var out = {
+    path: path,
+    filters: filterList,
+    start: loopTimes["loopStart"],
+    end: loopTimes["loopEnd"],
+    newFilename: null
+  };
 
+  var line = JSON.stringify(out);
 
   try {
     var currentFileValue = mp.utils.read_file(filename);
