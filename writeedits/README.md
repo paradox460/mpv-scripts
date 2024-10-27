@@ -35,9 +35,20 @@ Note that filters are stored in the editlist in the order MPV keeps them interna
 
 ## Example input.conf
 ```
-shift+Alt+c script-message-to writeedits write_edits "edits"
+shift+Alt+c script-message-to writeedits write_edits
 ```
 No default keybindings are provided. Replace `"edits"` with the name of the file you want to write to.
+
+You may specify the filename to write edits to in two ways (the default filename is `edits`):
+
+1. Add the following to your `mpv.conf` or profile configuration:
+   ```
+    writeedits-filename = "yourfilename"
+   ```
+2. Add the filename to your input conf binding:
+   ```
+   shift+Alt+c script-message-to writeedits write_edits "edits"
+   ```
 
 
 # Recommended other scripts and input configurations

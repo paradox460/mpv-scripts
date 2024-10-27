@@ -87,7 +87,18 @@ function cleanup() {
   mp.set_property("video-rotate", 0);
 }
 
+function options() {
+  var options = {
+    filename: "edits"
+  }
+  mp.options.read_options(options);
+  return options;
+}
+
 function writeEdits(filename) {
+  if (!filename) {
+    filename = options().filename;
+  }
   var path = mp.get_property("path");
   var filterList = buildFilterList();
   var loopTimes = processLoopTimes();
